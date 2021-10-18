@@ -1,0 +1,3 @@
+dmesg 			- list most recent action, which happend in system (have to be confirmed)
+lsblk			- list block (list block of memory in system)
+uname 			- print system information
