@@ -2,6 +2,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/c,c++,python,cmake,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=c,c++,python,cmake,linux
 
+*.swp
+
 ### C ###
 # Prerequisites
 *.d
