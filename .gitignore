@@ -4,6 +4,8 @@
 
 *.swp
 
+*.dwo
+
 ### C ###
 # Prerequisites
 *.d
