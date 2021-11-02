@@ -28,8 +28,7 @@ struct pcdev_private_data {
 	unsigned size;
 	const char * serial_number;
 	int perm;
-	struct class * class_pcd;
-	struct device * device_pcd;
+
 	struct cdev cdev;
 };
 
@@ -37,6 +36,8 @@ struct pcdev_private_data {
 struct pcdrv_private_data {
 	int total_devices;
 	dev_t device_number;
+	struct class * class_pcd;
+	struct device * device_pcd;
 	struct pcdev_private_data pcdev_data[NO_OF_DEVICES];
 };
 
@@ -73,7 +74,6 @@ struct pcdrv_private_data pcdrv_data = {
 loff_t pcd_lseek(struct file * filp, loff_t offset, int whence) {
 
 #if 0
-
 	loff_t temp;
 
 	pr_info("lseek request\n");
@@ -200,61 +200,62 @@ struct file_operations pcd_fops = {
 
 static int __init pcd_driver_init(void) {
 
-#if 0
 	int ret;
+	int i;
 
 	/* 1. Dynamically allocate a device number */
-	ret = alloc_chrdev_region(&device_number, 0, 1, "pcd_devices");
+	ret = alloc_chrdev_region(&pcdrv_data.device_number, 0, NO_OF_DEVICES, "pcd_devices");
 	if(ret < 0) {
 		pr_err("Alloc chrdev failed\n");
 		goto out;
 	}
-
-	pr_info("Device number <major>:<minor> = %d:%d\n", MAJOR(device_number), MINOR(device_number));
-
-	/* 2. Initialize the cdev structure with fops */ 
-	cdev_init(&pcd_cdev, &pcd_fops);
-
-	/* 3. Register a device (cdev structure) with VFS */
-	pcd_cdev.owner = THIS_MODULE;
-	ret = cdev_add(&pcd_cdev,  device_number, 1);
-	if(ret < 0) {
-		pr_err("Cdev add failed\n");
-		goto unreg_chardev;
-	}
-
-	/* 4. Create device class under /sys/class/ */
-	class_pcd = class_create(THIS_MODULE, "pcd_class");
-	if(IS_ERR(class_pcd)) {
+		
+	/* 2. Create device class under /sys/class/ */
+	pcdrv_data.class_pcd = class_create(THIS_MODULE, "pcd_class");
+	if(IS_ERR(pcdrv_data.class_pcd)) {
 		pr_err("Class creation failes\n");
-		ret = PTR_ERR(class_pcd);
+		ret = PTR_ERR(pcdrv_data.class_pcd);
 		goto cdev_del;
 	}
 
-	/* 5. populate the sysfs with device information */
-	device_pcd = device_create(class_pcd, NULL, device_number, NULL, "pcd");
-	if(IS_ERR(device_pcd)) {
-		pr_err("Device create failed\n");
-		ret = P  TR_ERR(device_pcd);
-		goto class_del;
-	}
 
-	pr_info("Module init was successful\n");
+	for(i = 0; i < NO_OF_DEVICES; i++) { 
+	
+		pr_info("Device number <major>:<minor> = %d:%d\n", MAJOR(pcdrv_data.device_number + i), MINOR(pcdrv_data.device_number + i));
+
+		/* 3. Initialize the cdev structure with fops */ 
+		cdev_init(&pcdrv_data.pcdev_data[i]. cdev, &pcd_fops);
+
+		/* 4. Register a device (cdev structure) with VFS */
+		pcdrv_data.pcdev_data[i].cdev.owner = THIS_MODULE;
+		ret = cdev_add(&pcdrv_data.pcdev_data[i].cdev, pcdrv_data.device_number, 1);
+		if(ret < 0) {
+			pr_err("Cdev add failed\n");
+			goto unreg_chardev;
+		}
+
+		/* 5. Populate the sysfs with device information */
+		pcdrv_data.device_pcd = device_create(pcdrv_data.class_pcd, NULL, pcdrv_data.device_number, NULL, "pcdev-%d", i+1);
+		if(IS_ERR(pcdrv_data.device_pcd)) {
+			pr_err("Device create failed\n");
+			ret = PTR_ERR(pcdrv_data.device_pcd);
+			goto class_del;
+		}
+
+		pr_info("Module init was successful\n");
+	}	
 
 	return 0;
 
 class_del:
-	class_destroy(class_pcd); 
+	class_destroy(pcdrv_data.class_pcd); 
 cdev_del:
-	cdev_del(&pcd_cdev);
+	cdev_del(&pcdrv_data.pcdev_data[i].cdev);
 unreg_chardev:
-	unregister_chrdev_region(device_number, 1);	
+	unregister_chrdev_region(pcdrv_data.device_number, NO_OF_DEVICES);
 out:
 	pr_info("Module instertion failed\n");
 	return ret;
-#endif
-
-	return 0;
 }
 
 static void __exit pcd_driver_cleanup(void) {
