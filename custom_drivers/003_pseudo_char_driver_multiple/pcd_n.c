@@ -215,7 +215,7 @@ static int __init pcd_driver_init(void) {
 	if(IS_ERR(pcdrv_data.class_pcd)) {
 		pr_err("Class creation failes\n");
 		ret = PTR_ERR(pcdrv_data.class_pcd);
-		goto cdev_del;
+		goto unreg_chrdev;
 	}
 
 
@@ -228,14 +228,14 @@ static int __init pcd_driver_init(void) {
 
 		/* 4. Register a device (cdev structure) with VFS */
 		pcdrv_data.pcdev_data[i].cdev.owner = THIS_MODULE;
-		ret = cdev_add(&pcdrv_data.pcdev_data[i].cdev, pcdrv_data.device_number, 1);
+		ret = cdev_add(&pcdrv_data.pcdev_data[i].cdev, pcdrv_data.device_number + i, 1);
 		if(ret < 0) {
 			pr_err("Cdev add failed\n");
-			goto unreg_chardev;
+			goto cdev_del;
 		}
 
 		/* 5. Populate the sysfs with device information */
-		pcdrv_data.device_pcd = device_create(pcdrv_data.class_pcd, NULL, pcdrv_data.device_number, NULL, "pcdev-%d", i+1);
+		pcdrv_data.device_pcd = device_create(pcdrv_data.class_pcd, NULL, pcdrv_data.device_number + i, NULL, "pcdev-%d", i+1);
 		if(IS_ERR(pcdrv_data.device_pcd)) {
 			pr_err("Device create failed\n");
 			ret = PTR_ERR(pcdrv_data.device_pcd);
@@ -247,11 +247,15 @@ static int __init pcd_driver_init(void) {
 
 	return 0;
 
-class_del:
-	class_destroy(pcdrv_data.class_pcd); 
 cdev_del:
-	cdev_del(&pcdrv_data.pcdev_data[i].cdev);
-unreg_chardev:
+class_del:
+	for(; i>=0; i--) {
+		device_destroy(pcdrv_data.class_pcd, pcdrv_data.device_number + i);
+		cdev_del(&pcdrv_data.pcdev_data[i].cdev);
+	}
+	class_destroy(pcdrv_data.class_pcd);
+	
+unreg_chrdev:
 	unregister_chrdev_region(pcdrv_data.device_number, NO_OF_DEVICES);
 out:
 	pr_info("Module instertion failed\n");
