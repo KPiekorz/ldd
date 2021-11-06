@@ -172,7 +172,33 @@ ssize_t pcd_write(struct file * filp, const char __user * buff, size_t count, lo
 	return -ENOMEM;
 }
 
+int check_permission(void)
+{
+	return 0;
+}
+
 int pcd_open(struct inode * inode, struct file * filp) {
+
+	int ret;
+	
+	int minor_n;
+
+	struct pcdev_private_data * pcdev_data;
+
+	/* 1. Findout on which device file open was attemptted by the user space */
+	minor_n = MINOR(inode->i_rdev);
+	pr_info("minor access = %d\n", minor_n);
+
+	/* 2. Get device's private data structure */
+	pcdev_data = container_of(inode->i_cdev, struct pcdev_private_data, cdev);
+
+	/* 3. To supply device prrivate data to other methods of the driver */
+	filp->private_data = pcdev_data;
+
+	/* 4. Check permission */
+	ret = check_permission();
+	
+	(!ret) ? pr_info("open was successful\n") : pr_info("open wasn't successful\n");
 
 	pr_info("open successful\n");
 	return 0;
@@ -249,12 +275,11 @@ static int __init pcd_driver_init(void) {
 
 cdev_del:
 class_del:
-	for(; i>=0; i--) {
+	for(; i >= 0; i--) {
 		device_destroy(pcdrv_data.class_pcd, pcdrv_data.device_number + i);
 		cdev_del(&pcdrv_data.pcdev_data[i].cdev);
 	}
 	class_destroy(pcdrv_data.class_pcd);
-	
 unreg_chrdev:
 	unregister_chrdev_region(pcdrv_data.device_number, NO_OF_DEVICES);
 out:
@@ -263,16 +288,16 @@ out:
 }
 
 static void __exit pcd_driver_cleanup(void) {
-
-#if 0
-	device_destroy(class_pcd, device_number);
-	class_destroy(class_pcd);
-	cdev_del(&pcd_cdev);
-	unregister_chrdev_region(device_number, 1);
+	
+	int i;
+	for(i = 0; i < NO_OF_DEVICES; i++) {
+		device_destroy(pcdrv_data.class_pcd, pcdrv_data.device_number + i);
+		cdev_del(&pcdrv_data.pcdev_data[i].cdev);
+	}
+	class_destroy(pcdrv_data.class_pcd);
+	unregister_chrdev_region(pcdrv_data.device_number, NO_OF_DEVICES);
 	
 	pr_info("Module unloaded\n");
-#endif
-
 }
 
 module_init(pcd_driver_init);
