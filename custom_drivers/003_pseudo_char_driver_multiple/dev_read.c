@@ -22,11 +22,11 @@ int main(int argc, char *argv[])
 	
 	int n =0,ret=0;
 
-	printf("Arguments count: %d\n", argc);
+	printf("arguments count: %d\n", argc);
 
 	if(argc != 2 ){
-		printf("Wrong usage\n");
-		printf("Correct usage: <file> <readcount>\n");
+		printf("wrong usage\n");
+		printf("correct usage: <file> <readcount>\n");
 		return 0;
 	}
 
@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
 	remaining = atoi(argv[1]);
 
 	printf("read requested = %d\n",remaining);
-
 
 	fd = open("/dev/pcdev-3",O_RDONLY);
 
@@ -81,11 +80,13 @@ int main(int argc, char *argv[])
 		n++;
 	}
 
-	printf("total_read = %d\n",total_read);
+	printf("total bytes read = %d\n",total_read);
 
+	printf("bytes read: ");
 	//dump buffer
 	for(int i=0 ; i < total_read ; i++)
 		printf("%c",buffer[i]);
+	printf("\n");
 
 	close(fd);
 	
