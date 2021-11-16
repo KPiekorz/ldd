@@ -45,15 +45,15 @@ int main(int argc, char *argv[])
 
 	printf("open was successful\n");
 
-#if  0 
+ 
 	/*activate this for lseek testing */
-	ret = lseek(fd,-10,SEEK_SET);
-	if(ret < 0){
+	ret = lseek(fd, -10, SEEK_SET);
+	if(ret < 0) {
 		perror("lseek");
 		close(fd);
 		return ret;
 	}
-#endif
+
 	/*Lets attempt reading twice */
 	
 	while(n != 2 && remaining)
