@@ -20,7 +20,7 @@ struct pcdev_platform_data pcdev_pdata[2] = {
 // crate two platform devices
 
 struct platform_device platform_pcdev_1 = {
-	.name = "pseudo_character_device",
+	.name = "pseudo-char-device",
 	.id = 0,
 	.dev = {
 		.platform_data = &pcdev_pdata[0],
@@ -29,7 +29,7 @@ struct platform_device platform_pcdev_1 = {
 };
 
 struct platform_device platform_pcdev_2 = {
-	.name = "pseudo_character_device",
+	.name = "pseudo-char-device",
 	.id = 1,
 	.dev = {
 		.platform_data = &pcdev_pdata[1],
@@ -44,7 +44,7 @@ static int __init pcdev_platform_init(void) {
 	platform_device_register(&platform_pcdev_1);
 	platform_device_register(&platform_pcdev_2);
 
-	pr_info("Device setup module inserted \n");
+	pr_info("Device setup module loaded\n");
 
 	return 0;
 }
@@ -54,7 +54,7 @@ static void __exit pcdev_platform_exit(void) {
 	platform_device_unregister(&platform_pcdev_1);
 	platform_device_unregister(&platform_pcdev_2);
 
-	pr_info("Device setup module removed \n");
+	pr_info("Device setup module unloaded\n");
 }
 
 module_init(pcdev_platform_init);
