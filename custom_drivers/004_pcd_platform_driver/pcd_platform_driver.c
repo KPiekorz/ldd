@@ -7,6 +7,7 @@
 #include <linux/platform_device.h>
 #include "platform.h"
 #include <linux/slab.h>
+#include <linux/mod_devicetable.h>
 
 /* Modify print function format */
 #undef pr_fmt
@@ -187,10 +188,19 @@ out:
 	return ret;
 }
 
+struct platform_device_id pcdevs_ids[] = {
+	
+	[0] = {.name = "pcdev-A1x"},
+	[1] = {.name = "pcdev-B1x"},
+	[2] = {.name = "pcdev-C1x"},
+	{   },
+};
+
 struct platform_driver pcd_platform_driver = {
 	
 	.probe = pcd_platform_driver_probe,
 	.remove = pcd_platform_driver_remove,
+	.id_table = pcdevs_ids,
 	.driver = {
 		.name = "pseudo-char-device"
 	}
